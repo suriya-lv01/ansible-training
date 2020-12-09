@@ -1,0 +1,53 @@
+---
+
+- name: Install nginx
+  hosts: webserver
+  # vars_files:
+  #   - environments/{{env_name}}/group_vars/builddeploy.yml
+
+  tasks:
+    - name: Enable epel repo
+      become: yes
+      yum: 
+        name: epel-release
+        state: latest
+
+    - name: install nginx
+      become: yes
+      yum: 
+        name: nginx
+        state: present
+
+    - name: start nginx
+      become: yes
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+        
+    - name: copy index.html
+      become: yes
+      template: 
+        src: template/index.html.j2
+        dest: /usr/share/nginx/html/index.html
+        mode: 0644
+      notify: Restart nginx
+
+    - name: Check if website is up or not
+      # no_log: true
+      uri:
+        url: "http://localhost"
+      register: nginx_service_status
+      until: nginx_service_status is not failed
+      retries: 5
+      delay: 10
+
+  handlers:
+  - name: Restart nginx
+    become: yes
+    service:
+      name: nginx
+      state: restarted
+      
+
+    

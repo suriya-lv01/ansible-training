@@ -1,0 +1,79 @@
+---
+
+- name: Install Packages
+  hosts: webserver
+  gather_facts: true
+  # vars_files:
+  #   - environments/{{env_name}}/group_vars/builddeploy.yml
+
+  tasks:
+    - name: Get me all the gather_facts
+      setup:
+      register: result
+
+    - name: Show me all the facts of remote server
+      debug:
+        msg: "{{result}}"  
+
+    - name: Install git
+      become: yes
+      yum:
+        name: "{{item}}"
+        state: present
+        update_cache: yes
+      loop:
+        - git
+        - wget
+        - zip
+        - java
+
+    - name: Install git
+      become: yes
+      apt:
+        name: git
+        state: present
+        update_cache: yes
+      loop:
+        - git
+        - wget
+        - zip
+        - java
+
+    - name: Create users
+      become: yes
+      ansible.builtin.user:
+        name: "{{ item }}"
+        state: present
+        groups: "wheel"
+      loop:
+        - "{{user1}}"
+        - "{{user2}}"
+    
+    - name: Create users and add them to groups
+      become: yes
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        state: present
+        groups: "{{ item.groups }}"
+      loop:
+        - { name: "{{user3}}", groups: 'wheel' }
+        - { name: "{{user4}}", groups: "{{ansible_real_group_id}}" }
+
+    - name: Check if website is up or not
+      # no_log: true
+      uri:
+        url: "http://localhost"
+      register: nginx_service_status
+      until: nginx_service_status is not failed
+      retries: 5
+      delay: 10
+
+    - name: Create file and take pause
+      file:
+        path: "{{ansible_user_dir}}/{{item}}"
+        state: touch
+      loop:
+        - firstfile.txt
+        - secondfile.txt
+      loop_control:
+        pause: 5

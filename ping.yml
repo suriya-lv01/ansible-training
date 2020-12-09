@@ -1,0 +1,10 @@
+---
+
+- name: Test ping
+  hosts: webserver
+  gather_facts: false
+
+  tasks:
+    - name: check connectivity
+      ping:
+        

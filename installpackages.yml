@@ -1,0 +1,46 @@
+---
+
+- name: Install Packages
+  hosts: webserver
+
+  tasks:
+    - name: Install git
+      become: yes
+      yum:
+        name: git
+        state: present
+        update_cache: yes
+
+    - name: Install wget
+      become: yes
+      yum:
+        name: wget
+        state: present
+        update_cache: yes
+
+    - name: Install zip
+      become: yes
+      yum:
+        name: zip
+        state: present
+        update_cache: yes
+
+    - name: Un-install unzip
+      become: yes
+      yum:
+        name: unzip
+        state: absent
+        update_cache: yes
+
+    - name: Install latest version of openjdk-6-jre
+      become: yes
+      yum:
+        name: java
+        state: latest
+
+    - name: Update all packages
+      become: yes
+      yum:
+        update_cache: yes
+        name: "*"
+        state: latest

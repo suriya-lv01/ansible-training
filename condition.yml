@@ -1,0 +1,59 @@
+- name: Conditions in playbook
+  hosts: webserver
+  vars_files:
+    - environments/{{env_name}}/group_vars/builddeploy.yml
+
+  tasks: 
+    - name: Install packages using yum
+      become: yes
+      yum:
+        name: git
+        state: present
+        update_cache: yes
+      loop:
+        - git
+        - wget
+        - zip
+        - java
+      when: 'ansible_distribution == "CentOS" and ansible_env.LOGNAME == "bofaansible"'
+
+    - name: Install packages using apt
+      become: yes
+      apt:
+        name: git
+        state: present
+        update_cache: yes
+      loop:
+        - git
+        - wget
+        - zip
+        - java
+      when: 'ansible_distribution == "Ubuntu"'
+
+    - name: Run the playbook even if file don't exist
+      file:
+        path: "{{ansible_user_dir}}/firstfile.txt"
+        state: file
+      register: presence
+      ignore_errors: yes
+
+    - name: Show debug message
+      debug:
+        msg: "The file is not present. Good to go"
+
+    - name: Check if user is present or not.
+      shell: "grep {{user5}} /etc/passwd"
+      register: userfound
+      ignore_errors: yes
+
+    - name: Show debug message
+      debug:
+        msg: "{{userfound}}"        
+
+    - name: Fail if user not found
+      debug:
+        msg: "user not found"      
+      failed_when:
+        - userfound.rc != 0
+        # - userfound.stdout == ""
+  

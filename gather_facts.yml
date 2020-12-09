@@ -1,0 +1,16 @@
+---
+
+- name: Test ping
+  hosts: webserver
+  gather_facts: true
+
+  tasks:
+    - name: Show me the OS info
+      debug: 
+        msg: "{{ansible_distribution}}"
+
+    - name: Show me the time zone
+      debug: 
+        msg: "{{ansible_date_time.tz}}"
+ 
+    
