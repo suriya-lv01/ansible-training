@@ -24,7 +24,7 @@
         - Multiple condition in when statement
     - Error Handling
         - Purposefully ignore the errors
-        - Failed the task based on condtion  
+        - Purposefully fail the task based on condtion  
    
 
 ## Run playbook
