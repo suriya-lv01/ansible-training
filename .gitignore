@@ -1,0 +1,10 @@
+*.retry
+.pass.txt
+docker.retry
+*.bak
+.DS_Store
+tmp
+*.egg
+*.pem
+*.ppk
+
