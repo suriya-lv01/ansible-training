@@ -1,0 +1,37 @@
+
+- name: Conditions in playbook
+  hosts: webserver
+  # vars_files:
+  #   - environments/{{env_name}}/group_vars/builddeploy.yml
+
+  tasks:
+      - name: Create users on worker node
+        become: yes
+        ansible.builtin.user:
+          name: "{{item}}"
+          state:  present
+          groups: newusers
+        loop:
+          - "{{user1}}"
+          - "{{user2}}"
+      
+      - name: check user is cretaed
+        shell: "grep user /etc/passwd"
+        register: usersearchresult
+
+      - name: show user results
+        debug: 
+          msg: "{{usersearchresult}}"
+
+    # - name: Install packages using yum
+    #   become: yes
+    #   yum:
+    #     name: git
+    #     state: present
+    #     update_cache: yes
+    #   loop:
+    #     - git
+    #     - wget
+    #     - zip
+    #     - java
+    #   when: 'ansible_distribution == "CentOS" and ansible_env.LOGNAME == "bofaansible" and ansible_distribution_version >= "8.5"'
