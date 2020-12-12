@@ -1,0 +1,16 @@
+---
+
+- name: Check users
+  hosts: webserver
+  gather_facts: false
+
+  tasks:
+    - name: check users
+      shell:  "grep bofaansible /etc/passwd"
+      register: userfound
+      ignore_errors: yes
+
+    - name: show user found status
+      debug:
+        msg:  "{{userfound}}"
+# fofofofofofmfoofofofofoofofffffooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
