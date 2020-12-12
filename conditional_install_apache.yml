@@ -10,7 +10,7 @@
         ansible.builtin.user:
           name: "{{item}}"
           state:  present
-          groups: newusers
+          groups: wheel
         loop:
           - "{{user1}}"
           - "{{user2}}"
