@@ -1,0 +1,19 @@
+
+- name: Conditions in playbook
+  hosts: webserver
+  vars_files:
+    - environments/{{env_name}}/group_vars/builddeploy.yml
+
+  tasks:
+    - name: Install packages using yum
+      become: yes
+      yum:
+        name: git
+        state: present
+        update_cache: yes
+      loop:
+        - git
+        - wget
+        - zip
+        - java
+      when: 'ansible_distribution == "CentOS" and ansible_env.LOGNAME == "bofaansible" and ansible_distribution_version >= "8.5"'
