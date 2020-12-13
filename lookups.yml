@@ -1,0 +1,38 @@
+---
+
+- name: Trying Ansible filters
+  hosts: localhost
+
+  tasks:
+    - name: Basic usage
+      debug:
+        msg: "'{{ lookup('env', 'HOME') }}' is the HOME environment variable."
+    
+    - debug: msg="the value of facts.yaml is {{lookup('file', '/home/anoop/linux_workspace/facts.yaml') }}"
+
+    - name: Display paths of all .txt files in dir
+      debug: msg={{ lookup('fileglob', '/home/anoop/linux_workspace/scripts/*.sh') }}
+
+    - name: list shell scripts
+      debug:
+        msg: "{{item}}"
+      with_fileglob:
+        - "/home/anoop/linux_workspace/scripts/*.sh"
+    
+    - name: We could read the file directly, but this shows output from command
+      debug:
+        msg: "{{item}}"
+      with_lines: cat /home/anoop/linux_workspace/scripts/dns.txt
+
+    - name: create strong password
+      set_fact:
+        random_pod_name: "{{ lookup('password', 'chars=ascii_letters,digits,hexdigits,punctuation length=20') }}"
+
+    - name: Show strong password
+      debug:
+        msg: "{{random_pod_name}}"
+
+    - name: create some test users
+      debug:
+        msg: "{{item}}"
+      with_sequence: start=0 end=32 format=testuser%02x

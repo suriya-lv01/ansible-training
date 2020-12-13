@@ -1,0 +1,3 @@
+---
+# defaults file for roles/gitclone
+repo_name: https://github.com/anoopmakhijaacc/ansible-training.git

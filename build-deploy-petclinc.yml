@@ -1,0 +1,139 @@
+---
+
+- name: Build Pet clinc application
+  hosts: localhost
+  vars_files:
+    - environments/{{env_name}}/group_vars/builddeploy.yml
+
+  tasks:
+    - name: Install required packages
+      become: yes
+      yum:
+        name: "{{item}}"
+        state: present
+      loop:
+        - maven
+        - git
+      tags: 
+        - build
+
+    - name: Remove the git clone workspace if present
+      file:
+        state: absent
+        path: "{{ansible_env.HOME}}/workspace" 
+    
+    - name: clone repo
+      git:
+        repo: "{{repo_url}}"
+        dest: "{{ansible_env.HOME}}/workspace/" 
+        
+
+    - name: Build war file
+      shell: "mvn clean install"
+      args:
+        chdir: "{{ansible_env.HOME}}/workspace"
+        
+           
+- name: Deploy application
+  hosts: webserver
+  vars_files:
+    - environments/{{env_name}}/group_vars/builddeploy.yml
+
+  tasks:
+    - name: Create Docker group
+      become: yes
+      group:
+        name: docker
+        state: present
+
+    - name: Add {{ansible_env.LOGNAME}} to docker group
+      become: yes
+      user:
+        name: "{{ansible_env.LOGNAME}}"
+        append: yes
+        groups: docker
+
+    - name: Install prerequisites packages for docker
+      become: yes
+      yum: 
+        name: "{{packages}}"
+        state: latest
+        update_cache: yes
+      vars:
+        packages:
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2 
+      tags: 
+        - dcoker
+
+    - name: Enable centos repo
+      become: yes
+      shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+    - name: Disable docker nightly builds
+      become: yes
+      shell: yum-config-manager --disable docker-ce-nightly
+
+    - name: Install docker
+      become: yes
+      yum: 
+        name: "{{packages}}"
+        state: installed
+        update_cache: yes
+      vars:
+        packages:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+
+    - name: Start service docker, autostart on reboot
+      become: yes
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    
+    - name: Remove Webapp folder if present
+      become: yes
+      file: 
+        path: "{{ansible_env.HOME}}/tomcat/webapp/"
+        state: absent
+
+    - name: Create a directory if it does not exist
+      become: yes
+      file:
+        path: "{{ansible_env.HOME}}/tomcat/webapp"
+        state: directory
+        owner: "{{ansible_env.LOGNAME}}"
+        group: "{{ansible_env.LOGNAME}}"
+        mode: '0755'
+
+    - name: Download tomcat docker file and start the tomcat conatiner
+      shell: "docker run -dt -p 8080:8080 -v {{ansible_env.HOME}}/tomcat/webapp:/usr/local/tomcat/webapps --restart always --name tomcat tomcat:8.0-alpine"
+      ignore_errors: yes  
+
+    - name: Copy the war file to tomcat webapp folder
+      become: yes
+      copy:
+        src: "{{hostvars.localhost.ansible_user_dir}}/workspace/target/petclinic.war"
+        dest: "{{ansible_env.HOME}}/tomcat/webapp/"
+        owner: "{{ansible_env.LOGNAME}}"
+        group: "{{ansible_env.LOGNAME}}" 
+
+    - name: Restart tomcat
+      shell: "docker restart tomcat"
+
+    - name: Check if website is up or not
+      uri:
+        url: "http://localhost:8080/petclinic/"
+      register: tomcat_service_status
+      until: tomcat_service_status is not failed
+      retries: 5
+      delay: 10
+      tags: 
+        - deploy
+
+    
+
+                

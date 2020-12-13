@@ -1,0 +1,6 @@
+---
+# tasks file for roles/gitclone
+
+- name: Show me the url
+  debug:
+    msg: "{{repo_name}}"

@@ -1,0 +1,31 @@
+---
+
+- name: Build Pet clinc application
+  hosts: localhost
+  vars_files:
+    - environments/{{env_name}}/group_vars/builddeploy.yml
+  roles:
+  - { role: build, tags: [ 'build' ] }
+
+           
+- name: Deploy application
+  hosts: webserver
+  vars_files:
+    - environments/{{env_name}}/group_vars/builddeploy.yml
+  pre_tasks:
+    - name: Running pre-task
+      shell: "echo 'starting deployment'"
+  roles:
+    - { role: docker, tags: [ 'docker' ] }
+    - { role: deploy, tags: [ 'deploy' ] }
+  tasks:
+    - name: Running task after role completion
+      shell: "echo 'Deployment in progress'"
+  post_tasks:
+    - name: Running post deployment task
+      shell: "echo 'Deployment in completed'"
+
+  
+    
+
+                

@@ -1,0 +1,68 @@
+---
+# tasks file for roles/docker
+
+- name: Create Docker group
+  become: yes
+  group:
+    name: docker
+    state: present
+  tags: 
+   - docker
+
+- name: Add {{ansible_env.LOGNAME}} to docker group
+  become: yes
+  user:
+    name: "{{ansible_env.LOGNAME}}"
+    append: yes
+    groups: docker
+  tags: 
+   - docker
+
+- name: Install prerequisites packages for docker
+  become: yes
+  yum: 
+    name: "{{packages}}"
+    state: latest
+    update_cache: yes
+  vars:
+    packages:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2 
+  tags: 
+   - docker
+
+- name: Enable centos repo
+  become: yes
+  shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  tags: 
+   - docker
+
+- name: Disable docker nightly builds
+  become: yes
+  shell: yum-config-manager --disable docker-ce-nightly
+  tags: 
+   - docker
+
+- name: Install docker
+  become: yes
+  yum: 
+    name: "{{packages}}"
+    state: installed
+    update_cache: yes
+  vars:
+    packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+  tags: 
+   - docker
+
+- name: Start service docker, autostart on reboot
+  become: yes
+  service:
+    name: docker
+    state: started
+    enabled: yes
+  tags: 
+   - docker

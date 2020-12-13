@@ -1,0 +1,60 @@
+---
+
+- name: Trying Ansible filters
+  hosts: webserver
+  gather_facts: true
+  vars_prompt:
+    - name: password
+      prompt: MySql Password?
+      private: yes
+
+    - name: public_ip
+      prompt: What is your public IP?
+      private: no
+
+  tasks:
+    - name: Get facts from remote server
+      setup:
+      register: results
+
+    - name: Copy ansible facts to a file.
+      delegate_to: localhost
+      copy:
+        content: "{{ results | to_nice_yaml }}"
+        dest: /home/anoop/linux_workspace/facts.yaml
+
+    - name: Pull docker images
+      shell: "docker pull {{item.value}}"
+      loop: "{{ microservices_image_tags | dict2items }}"
+    
+    - name: Is server restart required
+      debug:
+        msg : "{{ (status == 'needs_restart') | ternary('restart', 'continue') }}"
+
+    - name: Install package
+      yum:
+        name: git
+        state: present
+      when: ansible_distribution_version is version('7', '>=')
+
+    - name: Give me largest permutations (order matters)
+      ansible.builtin.debug:
+        msg: "{{ [1,2,3] | permutations | list }}"
+
+    - name: Give me permutations of sets of three
+      ansible.builtin.debug:
+        msg: "{{ [1,2,3] | permutations(2) | list }}"
+
+    - name: Get hash of password
+      debug:
+        msg: "{{ 'password' | hash('sha1') }}"
+
+    - name: Check for valid IP
+      set_fact:
+        valid_ip: "{{ public_ip | ipaddr }}"
+      register: result
+      failed_when: 
+        - 'result.ansible_facts.valid_ip == false'
+
+    # Filters: https://docs.ansible.com/ansible/latest/user_guide/playbooks_filters.html#manipulating-text
+    # Plugins: https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html

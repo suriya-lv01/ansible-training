@@ -1,0 +1,33 @@
+---
+# tasks file for roles/build
+- name: Install required packages
+  become: yes
+  yum:
+    name: "{{item}}"
+    state: present
+  loop:
+    - maven
+    - git
+  tags: 
+   - build
+
+- name: Remove the git clone workspace if present
+  file:
+    state: absent
+    path: "{{ansible_env.HOME}}/workspace" 
+  tags: 
+   - build  
+
+- name: clone repo
+  git:
+    repo: "{{repo_url}}"
+    dest: "{{ansible_env.HOME}}/workspace/" 
+  tags: 
+   - build  
+
+- name: Build war file
+  shell: "mvn clean install"
+  args:
+    chdir: "{{ansible_env.HOME}}/workspace"
+  tags: 
+   - build

@@ -1,0 +1,57 @@
+---
+# tasks file for roles/deploy
+# - name: Deploy Docker
+#   import_role: 
+#     name: docker
+#   tags: 
+#    - deploy
+
+- name: Remove Webapp folder if present
+  become: yes
+  file: 
+    path: "{{ansible_env.HOME}}/tomcat/webapp/"
+    state: absent
+  tags: 
+   - deploy
+
+- name: Create a directory if it does not exist
+  become: yes
+  file:
+    path: "{{ansible_env.HOME}}/tomcat/webapp"
+    state: directory
+    owner: "{{ansible_env.LOGNAME}}"
+    group: "{{ansible_env.LOGNAME}}"
+    mode: '0755'
+  tags: 
+   - deploy
+
+- name: Download tomcat docker file and start the tomcat conatiner
+  shell: "docker run -dt -p 8080:8080 -v {{ansible_env.HOME}}/tomcat/webapp:/usr/local/tomcat/webapps --restart always --name tomcat tomcat:8.0-alpine"
+  ignore_errors: yes  
+  tags: 
+   - deploy
+
+- name: Copy the war file to tomcat webapp folder
+  become: yes
+  copy:
+    src: "{{hostvars.localhost.ansible_user_dir}}/workspace/target/petclinic.war"
+    dest: "{{ansible_env.HOME}}/tomcat/webapp/"
+    owner: "{{ansible_env.LOGNAME}}"
+    group: "{{ansible_env.LOGNAME}}" 
+  tags: 
+   - deploy
+
+- name: Restart tomcat
+  shell: "docker restart tomcat"
+  tags: 
+   - deploy
+
+- name: Check if website is up or not
+  uri:
+    url: "http://localhost:8080/petclinic/"
+  register: tomcat_service_status
+  until: tomcat_service_status is not failed
+  retries: 5
+  delay: 10
+  tags: 
+   - deploy
